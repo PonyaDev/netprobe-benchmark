@@ -7,3 +7,11 @@
 Прочитаны `C:/Projects/AGENTS.md`, README, учебный разбор Python и отчёт `01-python-mvp.md`. `git status --short --branch` показал чистую `python-implementation`, `git log --oneline -5` подтвердил HEAD `31fc2a4`. По результатам независимой приёмки, переданным Тимуром, Python прошёл 7 тестов на 3.12.3 и проверку HTTPS. Node-этап использует принятую реализацию как базу.
 
 `git branch --list --verbose` показала `main` (`c05901b`) и `python-implementation` (`31fc2a4`). Команда `git switch -c node-implementation python-implementation` создала новую ветку с HEAD `31fc2a4`. Runtime для проверки — Node.js `v24.15.0`. Добавлены `node/netprobe.mjs` и этот отчёт.
+
+Коммит `89ac346` (`Scaffold Node benchmark`). `git diff --cached --check` завершилась с кодом 0, `git status --short --branch` вывела только `## node-implementation`.
+
+## Логика
+
+Добавлены разбор CLI, проверка и маскировка URL, потоковое чтение с `fetch`, единый таймаут и расчёт метрик. `await` внутри цикла дожидается чтения 2xx до EOF или завершения обработки ошибки. Ответы 3xx обрабатываются вручную. В диагностике используются собственные категории и числовой HTTP-код.
+
+`node --check node/netprobe.mjs` и `node node/netprobe.mjs --help` вернули 0. Единственная попытка HTTPS к `https://example.com/` вернула 0, один успех и 577 байт. Полный вывод приведён ниже.
