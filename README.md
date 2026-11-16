@@ -4,7 +4,7 @@
 
 ## Запуск
 
-Команды запускаются из корня репозитория. Для Python нужен Python 3.10+, для JavaScript — Node.js 24+. Обе версии используют встроенные библиотеки.
+Команды запускаются из корня репозитория. Для Python нужен Python 3.10+, для JavaScript — Node.js 22.1+. Локальная проверка выполнена на Node.js 24.15.0. Обе версии используют встроенные библиотеки. [Выпуск Node.js 22.1.0 с `URL.parse`](https://nodejs.org/en/blog/release/v22.1.0).
 
 ```powershell
 python python/netprobe.py 'http://127.0.0.1:8000/download'

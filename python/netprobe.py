@@ -43,6 +43,7 @@ def parse_target(url: str) -> Target:
         raise argparse.ArgumentTypeError("invalid HTTP(S) URL") from None
     path = quote(parsed.path or "/", safe="/%:@!$&'()*+,;=-._~")
     has_query = "?" in url.split("#", 1)[0]
+    # Keep the server's query separate from the address printed to the user.
     request_path = path
     display_url = f"{parsed.scheme}://{parsed.netloc}{path}"
     if has_query:
@@ -78,6 +79,7 @@ def download(target: Target, timeout: float) -> tuple[int, float]:
     )
     connection = connection_class(target.host, target.port, timeout=timeout)
     try:
+        # Start before the GET so opening the socket and TLS are part of the sample.
         started = time.perf_counter()
         connection.request("GET", target.request_path, headers={"Connection": "close"})
         with connection.getresponse() as response:
@@ -85,6 +87,7 @@ def download(target: Target, timeout: float) -> tuple[int, float]:
                 raise UnexpectedStatus(f"HTTP {response.status}")
 
             byte_count = 0
+            # A bounded read keeps memory use independent of the response size.
             while chunk := response.read(CHUNK_SIZE):
                 byte_count += len(chunk)
             elapsed = time.perf_counter() - started
@@ -152,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Successes: {successes}; errors: {args.requests - successes}")
     average_ms = f"{total_seconds * 1000 / successes:.3f}" if successes else "n/a"
     total_mib = total_bytes / MIB
+    # Divide the totals so each sample contributes in proportion to its duration.
     rate = f"{total_mib / total_seconds:.3f}" if total_seconds > 0 else "n/a"
     print(f"Average time: {average_ms} ms")
     print(f"Total volume: {total_mib:.6f} MiB ({total_bytes} bytes)")

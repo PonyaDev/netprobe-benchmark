@@ -54,6 +54,7 @@ function readOptions(args) {
   }
 
   url.hash = '';
+  // Keep the query on the request URL and build a redacted address for display.
   const query = url.href.includes('?') ? '?[redacted]' : '';
   const displayUrl = `${url.origin}${url.pathname}${query}`;
   return { url, displayUrl, requests, timeoutMs };
@@ -63,12 +64,15 @@ async function download(url, timeoutMs, now) {
   const signal = AbortSignal.timeout(timeoutMs);
   let response;
   try {
+    // Start before fetch to include connection setup when there is no pooled socket.
     const started = now();
+    // A redirect is an HTTP result for this attempt, with no follow-up GET.
     response = await fetch(url, { method: 'GET', redirect: 'manual', signal });
     if (!response.ok) return { failure: `HTTP ${response.status}` };
 
     let bytes = 0;
     if (response.body) {
+      // Count the chunks as they arrive to avoid buffering the entire response.
       for await (const chunk of response.body) {
         bytes += chunk.byteLength;
       }
@@ -108,6 +112,7 @@ export async function main(args, {
   let totalBytes = 0;
   let totalMs = 0;
   for (let attempt = 1; attempt <= requests; attempt += 1) {
+    // Hold the next GET until this attempt has finished reading or cleaning up.
     const result = await download(url, timeoutMs, now);
     if (result.failure) {
       stderr(`Attempt ${attempt}: ${result.failure}`);
@@ -120,6 +125,7 @@ export async function main(args, {
 
   const totalMiB = totalBytes / MIB;
   const average = successes ? (totalMs / successes).toFixed(3) : 'n/a';
+  // Use the same successful attempts for both the byte and time totals.
   const throughput = totalMs > 0 ? (totalMiB / (totalMs / 1000)).toFixed(3) : 'n/a';
   stdout(`Successes: ${successes}; errors: ${requests - successes}`);
   stdout(`Average time: ${average} ms`);
